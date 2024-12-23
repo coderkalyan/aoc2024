@@ -1,0 +1,72 @@
+import re
+import numpy as np
+
+xmas = list(map(ord, ["X", "M", "A", "S"]))
+
+data = []
+with open("d04.in") as f:
+    for line in f:
+        data.append(list(map(ord, line.strip())))
+    data = np.array(data)
+    rows, cols = data.shape
+    data = np.pad(data, ((rows, rows), (rows, cols)))
+
+def count(l):
+    state = 0
+    ans = 0
+    for c in l:
+        if c != xmas[state]:
+            state = 0
+        if c == xmas[state]:
+            state += 1
+        if state == 4:
+            ans += 1
+            state = 0
+    # if ans > 0:
+    #     print(list(map(chr, l)), ans)
+
+    return ans
+
+def part_a():
+    ans = 0
+    ans += sum(count(row) for row in data)
+    ans += sum(count(row[::-1]) for row in data)
+    ans += sum(count(col) for col in data.T)
+    ans += sum(count(col[::-1]) for col in data.T)
+
+    best = max(rows, cols)
+    for offset in range(-best, best):
+        diagonal = list(filter(lambda x: x != 0, data.diagonal(offset)))
+        # print("".join(map(lambda x: chr(x), diagonal)))
+        ans += count(diagonal)
+        ans += count(diagonal[::-1])
+
+    flip = np.fliplr(data)
+    for offset in range(-best, best):
+        diagonal = list(filter(lambda x: x != 0, flip.diagonal(offset)))
+        # print("".join(map(lambda x: chr(x), diagonal)))
+        ans += count(diagonal)
+        ans += count(diagonal[::-1])
+
+    return ans
+
+def part_b():
+    ans = 0
+
+    # for dat in [data, np.fliplr(data), np.flipud(data), np.flipud(np.fliplr(data))]:
+    # # for dat in [data]:
+    dat = data
+    for y in range(rows + 1, rows + rows - 1):
+        for x in range(cols + 1, cols + cols - 1):
+            if dat[y][x] != ord("A"): continue
+            d1 = data[y - 1][x - 1] == ord("M") and data[y + 1][x + 1] == ord("S")
+            d2 = data[y - 1][x - 1] == ord("S") and data[y + 1][x + 1] == ord("M")
+            d3 = data[y - 1][x + 1] == ord("M") and data[y + 1][x - 1] == ord("S")
+            d4 = data[y - 1][x + 1] == ord("S") and data[y + 1][x - 1] == ord("M")
+            if (d1 or d2) and (d3 or d4):
+                ans += 1
+
+    return ans
+
+print(part_a())
+print(part_b())
